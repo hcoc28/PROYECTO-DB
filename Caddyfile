@@ -1,0 +1,13 @@
+# Proxy inverso con HTTPS automático para la aplicación (ver docker-compose.yml).
+# DOMINIO llega como variable de entorno; por defecto "localhost" (certificado local de Caddy).
+{$DOMINIO:localhost} {
+	encode gzip
+
+	reverse_proxy app:3000 {
+		# El proxy SOBRESCRIBE estas cabeceras: así el cliente no puede falsificar su IP
+		# y la aplicación (TRUST_PROXY=1) las puede creer.
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
