@@ -1,0 +1,376 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model auditoria_evento {
+  id_evento          BigInt   @id(map: "pk_auditoria_evento") @default(autoincrement())
+  tabla              String   @db.NVarChar(128)
+  id_registro        String   @db.NVarChar(80)
+  accion             String   @db.NVarChar(10)
+  id_usuario         Int?
+  fecha_evento       DateTime @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_auditoria_fecha") @db.DateTimeOffset
+  valores_anteriores String?  @db.NVarChar(Max)
+  valores_nuevos     String?  @db.NVarChar(Max)
+  usuario            usuario? @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_auditoria_usuario")
+
+  @@index([fecha_evento(sort: Desc)], map: "ix_auditoria_fecha")
+  @@index([tabla, id_registro], map: "ix_auditoria_tabla_registro")
+}
+
+model bitacora {
+  id_bitacora BigInt   @id(map: "pk_bitacora") @default(autoincrement())
+  id_usuario  Int?
+  usuario_intentado String? @db.NVarChar(50)
+  accion      String   @db.NVarChar(100)
+  detalle     String?  @db.NVarChar(500)
+  ip          String?  @db.NVarChar(45)
+  fecha       DateTime @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_bitacora_fecha") @db.DateTimeOffset
+  usuario     usuario? @relation(fields: [id_usuario], references: [id_usuario], onUpdate: NoAction, map: "fk_bitacora_usuario")
+
+  @@index([accion, fecha(sort: Desc)], map: "ix_bitacora_accion")
+  @@index([fecha(sort: Desc)], map: "ix_bitacora_fecha")
+}
+
+model cliente {
+  id_cliente         Int                  @id(map: "pk_cliente") @default(autoincrement())
+  nombre_cliente     String               @db.NVarChar(160)
+  tipo_documento     String               @default("CF", map: "df_cliente_tipo_doc") @db.NVarChar(20)
+  documento          String               @default("CF", map: "df_cliente_documento") @db.NVarChar(30)
+  documento_norm     String?              @db.NVarChar(30)
+  correo             String?              @db.NVarChar(254)
+  telefono           String?              @db.NVarChar(25)
+  direccion          String?              @db.NVarChar(500)
+  municipio          String?              @db.NVarChar(100)
+  departamento       String?              @db.NVarChar(100)
+  activo             Boolean              @default(true, map: "df_cliente_activo")
+  creado_en          DateTime             @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_cliente_creado") @db.DateTimeOffset
+  cobro              cobro[]
+  factura            factura[]
+  movimiento_cliente movimiento_cliente[]
+}
+
+model cobro {
+  id_cobro           BigInt               @id(map: "pk_cobro") @default(autoincrement())
+  id_cliente         Int
+  id_usuario         Int
+  fecha_cobro        DateTime             @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_cobro_fecha") @db.DateTimeOffset
+  monto              Decimal              @db.Decimal(18, 2)
+  codigo_metodo      String               @db.NVarChar(20)
+  referencia         String?              @db.NVarChar(100)
+  estado             String               @default("APLICADO", map: "df_cobro_estado") @db.NVarChar(10)
+  observaciones      String?              @db.NVarChar(500)
+  anulado_en         DateTime?            @db.DateTimeOffset
+  id_usuario_anula   Int?
+  motivo_anulacion   String?              @db.NVarChar(500)
+  cliente            cliente              @relation(fields: [id_cliente], references: [id_cliente], onUpdate: NoAction, map: "fk_cobro_cliente")
+  metodo_pago        metodo_pago          @relation(fields: [codigo_metodo], references: [codigo], onUpdate: NoAction, map: "fk_cobro_metodo")
+  usuario            usuario              @relation("cobro_id_usuarioTousuario", fields: [id_usuario], references: [id_usuario], onUpdate: NoAction, map: "fk_cobro_usuario")
+  usuario_anula      usuario?             @relation("cobro_id_usuario_anulaTousuario", fields: [id_usuario_anula], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_cobro_usuario_anula")
+  cobro_aplicacion   cobro_aplicacion[]
+  movimiento_cliente movimiento_cliente[]
+
+  @@unique([id_cobro, id_cliente], map: "uq_cobro_con_cliente")
+  @@index([id_cliente, fecha_cobro(sort: Desc)], map: "ix_cobro_cliente_fecha")
+  @@index([fecha_cobro(sort: Desc), codigo_metodo], map: "ix_cobro_fecha")
+}
+
+model cobro_aplicacion {
+  id_aplicacion BigInt   @id(map: "pk_cobro_aplicacion") @default(autoincrement())
+  id_cobro      BigInt
+  id_factura    BigInt
+  id_cliente    Int
+  monto         Decimal  @db.Decimal(18, 2)
+  fecha         DateTime @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_aplicacion_fecha") @db.DateTimeOffset
+  cobro         cobro    @relation(fields: [id_cobro, id_cliente], references: [id_cobro, id_cliente], onUpdate: NoAction, map: "fk_aplicacion_cobro")
+  factura       factura  @relation(fields: [id_factura, id_cliente], references: [id_factura, id_cliente], onUpdate: NoAction, map: "fk_aplicacion_factura")
+
+  @@unique([id_cobro, id_factura], map: "uq_aplicacion")
+  @@index([id_factura], map: "ix_aplicacion_factura")
+  @@index([id_cliente], map: "ix_aplicacion_cliente")
+}
+
+model detalle_factura {
+  id_detalle            BigInt                  @id(map: "pk_detalle_factura") @default(autoincrement())
+  id_factura            BigInt
+  id_producto           Int
+  descripcion           String                  @db.NVarChar(250)
+  codigo_unidad         String                  @db.NVarChar(10)
+  tipo_item             String                  @db.NVarChar(10)
+  cantidad              Decimal                 @db.Decimal(18, 4)
+  precio_unitario       Decimal                 @db.Decimal(18, 2)
+  descuento_linea       Decimal                 @default(0, map: "df_detalle_descuento") @db.Decimal(18, 2)
+  tasa_iva              Decimal                 @db.Decimal(9, 6)
+  total_linea           Decimal?                @db.Decimal(18, 2)
+  subtotal_sin_iva      Decimal?                @db.Decimal(18, 2)
+  iva_linea             Decimal?                @db.Decimal(19, 2)
+  factura               factura                 @relation(fields: [id_factura], references: [id_factura], onUpdate: NoAction, map: "fk_detalle_factura")
+  producto              producto                @relation(fields: [id_producto], references: [id_producto], onUpdate: NoAction, map: "fk_detalle_producto")
+  unidad_medida         unidad_medida           @relation(fields: [codigo_unidad], references: [codigo], onUpdate: NoAction, map: "fk_detalle_unidad")
+  movimiento_inventario movimiento_inventario[]
+
+  @@unique([id_detalle, id_factura, id_producto], map: "uq_detalle_completo")
+  @@index([id_factura], map: "ix_detalle_factura")
+  @@index([id_producto], map: "ix_detalle_producto")
+}
+
+model estado_factura {
+  codigo                                                                             String                      @id(map: "pk_estado_factura") @db.NVarChar(25)
+  descripcion                                                                        String                      @db.NVarChar(100)
+  editable                                                                           Boolean
+  factura                                                                            factura[]
+  historial_estado_factura_historial_estado_factura_estado_anteriorToestado_factura  historial_estado_factura[]  @relation("historial_estado_factura_estado_anteriorToestado_factura")
+  historial_estado_factura_historial_estado_factura_estado_nuevoToestado_factura     historial_estado_factura[]  @relation("historial_estado_factura_estado_nuevoToestado_factura")
+  transicion_estado_factura_transicion_estado_factura_estado_destinoToestado_factura transicion_estado_factura[] @relation("transicion_estado_factura_estado_destinoToestado_factura")
+  transicion_estado_factura_transicion_estado_factura_estado_origenToestado_factura  transicion_estado_factura[] @relation("transicion_estado_factura_estado_origenToestado_factura")
+}
+
+model factura {
+  id_factura               BigInt                     @id(map: "pk_factura") @default(autoincrement())
+  id_negocio               Int
+  id_serie_documento       Int
+  numero_interno           BigInt
+  id_cliente               Int
+  id_usuario               Int
+  fecha_emision            DateTime                   @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_factura_fecha") @db.DateTimeOffset
+  moneda                   String                     @default("GTQ", map: "df_factura_moneda") @db.NVarChar(3)
+  condicion_pago           String                     @default("CONTADO", map: "df_factura_condicion") @db.NVarChar(10)
+  fecha_vencimiento        DateTime?                  @db.Date
+  subtotal_gravado         Decimal                    @default(0, map: "df_factura_sg") @db.Decimal(18, 2)
+  subtotal_exento          Decimal                    @default(0, map: "df_factura_se") @db.Decimal(18, 2)
+  descuento_total          Decimal                    @default(0, map: "df_factura_desc") @db.Decimal(18, 2)
+  iva_total                Decimal                    @default(0, map: "df_factura_iva") @db.Decimal(18, 2)
+  total                    Decimal                    @default(0, map: "df_factura_total") @db.Decimal(18, 2)
+  saldo_pendiente          Decimal                    @default(0, map: "df_factura_saldo") @db.Decimal(18, 2)
+  estado                   String                     @default("BORRADOR", map: "df_factura_estado") @db.NVarChar(25)
+  estado_pago              String                     @default("NO_APLICA", map: "df_factura_estado_pago") @db.NVarChar(15)
+  uuid_fel                 String?                    @db.NVarChar(80)
+  serie_fel                String?                    @db.NVarChar(40)
+  numero_fel               String?                    @db.NVarChar(40)
+  fecha_certificacion      DateTime?                  @db.DateTimeOffset
+  xml_fel_hash             Bytes?                     @db.VarBinary(32)
+  id_transaccion_fel       String                     @default(dbgenerated("newid()"), map: "df_factura_transaccion_fel") @unique(map: "ux_factura_transaccion_fel") @db.UniqueIdentifier
+  url_xml                  String?                    @db.NVarChar(500)
+  url_pdf                  String?                    @db.NVarChar(500)
+  id_factura_referencia    BigInt?
+  motivo_referencia        String?                    @db.NVarChar(500)
+  motivo_anulacion         String?                    @db.NVarChar(500)
+  anulada_en               DateTime?                  @db.DateTimeOffset
+  id_usuario_anula         Int?
+  uuid_anulacion           String?                    @db.NVarChar(80)
+  fecha_anulacion_fel      DateTime?                  @db.DateTimeOffset
+  observaciones            String?
+  cobro_aplicacion         cobro_aplicacion[]
+  detalle_factura          detalle_factura[]
+  cliente                  cliente                    @relation(fields: [id_cliente], references: [id_cliente], onUpdate: NoAction, map: "fk_factura_cliente")
+  estado_factura           estado_factura             @relation(fields: [estado], references: [codigo], onUpdate: NoAction, map: "fk_factura_estado")
+  negocio                  negocio                    @relation(fields: [id_negocio], references: [id_negocio], onUpdate: NoAction, map: "fk_factura_negocio")
+  factura_referencia       factura?                   @relation("facturaTofactura", fields: [id_factura_referencia, id_cliente], references: [id_factura, id_cliente], onUpdate: NoAction, map: "fk_factura_referencia")
+  notas                    factura[]                  @relation("facturaTofactura")
+  serie_documento          serie_documento            @relation(fields: [id_serie_documento, id_negocio], references: [id_serie_documento, id_negocio], onUpdate: NoAction, map: "fk_factura_serie")
+  usuario                  usuario                    @relation("factura_id_usuarioTousuario", fields: [id_usuario], references: [id_usuario], onUpdate: NoAction, map: "fk_factura_usuario")
+  usuario_anula            usuario?                   @relation("factura_id_usuario_anulaTousuario", fields: [id_usuario_anula], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_factura_usuario_anula")
+  factura_fel              factura_fel[]
+  historial_estado_factura historial_estado_factura[]
+  movimiento_cliente       movimiento_cliente[]
+  movimiento_inventario    movimiento_inventario[]
+
+  @@unique([id_factura, id_cliente], map: "uq_factura_con_cliente")
+  @@unique([id_serie_documento, numero_interno], map: "uq_factura_numero_interno")
+  @@index([id_cliente, fecha_emision(sort: Desc)], map: "ix_factura_cliente_fecha")
+  @@index([estado, fecha_emision(sort: Desc)], map: "ix_factura_estado")
+}
+
+model factura_fel {
+  id_factura_fel   BigInt   @id(map: "pk_factura_fel") @default(autoincrement())
+  id_factura       BigInt
+  tipo_evento      String   @db.NVarChar(20)
+  intento          Int
+  exito            Boolean
+  xml_enviado      String?  @db.Xml
+  xml_respuesta    String?  @db.Xml
+  codigo_respuesta String?  @db.NVarChar(40)
+  mensaje          String?  @db.NVarChar(2000)
+  creado_en        DateTime @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_fel_creado") @db.DateTimeOffset
+  factura          factura  @relation(fields: [id_factura], references: [id_factura], onUpdate: NoAction, map: "fk_fel_factura")
+
+  @@unique([id_factura, tipo_evento, intento], map: "uq_fel_intento")
+}
+
+model historial_estado_factura {
+  id_historial                                                            BigInt          @id(map: "pk_historial_estado") @default(autoincrement())
+  id_factura                                                              BigInt
+  estado_anterior                                                         String?         @db.NVarChar(25)
+  estado_nuevo                                                            String          @db.NVarChar(25)
+  id_usuario                                                              Int?
+  fecha                                                                   DateTime        @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_hist_estado_fecha") @db.DateTimeOffset
+  motivo                                                                  String?         @db.NVarChar(500)
+  estado_factura_historial_estado_factura_estado_anteriorToestado_factura estado_factura? @relation("historial_estado_factura_estado_anteriorToestado_factura", fields: [estado_anterior], references: [codigo], onDelete: NoAction, onUpdate: NoAction, map: "fk_hist_ant")
+  factura                                                                 factura         @relation(fields: [id_factura], references: [id_factura], onUpdate: NoAction, map: "fk_hist_factura")
+  estado_factura_historial_estado_factura_estado_nuevoToestado_factura    estado_factura  @relation("historial_estado_factura_estado_nuevoToestado_factura", fields: [estado_nuevo], references: [codigo], onUpdate: NoAction, map: "fk_hist_nuevo")
+  usuario                                                                 usuario?        @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_hist_usuario")
+
+  @@index([id_factura, id_historial], map: "ix_hist_factura")
+}
+
+model metodo_pago {
+  codigo              String  @id(map: "pk_metodo_pago") @db.NVarChar(20)
+  nombre              String  @db.NVarChar(60)
+  requiere_referencia Boolean @default(false, map: "df_metodo_ref")
+  activo              Boolean @default(true, map: "df_metodo_activo")
+  cobro               cobro[]
+}
+
+model movimiento_cliente {
+  id_movimiento    BigInt   @id(map: "pk_movimiento_cliente") @default(autoincrement())
+  id_cliente       Int
+  fecha_movimiento DateTime @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_mov_cli_fecha") @db.DateTimeOffset
+  tipo_movimiento  String   @db.NVarChar(25)
+  id_factura       BigInt?
+  id_cobro         BigInt?
+  cargo            Decimal  @default(0, map: "df_mov_cli_cargo") @db.Decimal(18, 2)
+  abono            Decimal  @default(0, map: "df_mov_cli_abono") @db.Decimal(18, 2)
+  descripcion      String?  @db.NVarChar(200)
+  id_usuario       Int?
+  cliente          cliente  @relation(fields: [id_cliente], references: [id_cliente], onUpdate: NoAction, map: "fk_mov_cli_cliente")
+  cobro            cobro?   @relation(fields: [id_cobro, id_cliente], references: [id_cobro, id_cliente], onUpdate: NoAction, map: "fk_mov_cli_cobro")
+  factura          factura? @relation(fields: [id_factura, id_cliente], references: [id_factura, id_cliente], onUpdate: NoAction, map: "fk_mov_cli_factura")
+  usuario          usuario? @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_mov_cli_usuario")
+
+  @@index([id_cliente, id_movimiento], map: "ix_mov_cli_cliente")
+}
+
+model movimiento_inventario {
+  id_movimiento    BigInt           @id(map: "pk_movimiento_inventario") @default(autoincrement())
+  id_producto      Int
+  id_factura       BigInt?
+  id_detalle       BigInt?
+  id_usuario       Int?
+  fecha_movimiento DateTime         @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_mov_inv_fecha") @db.DateTimeOffset
+  tipo_movimiento  String           @db.NVarChar(20)
+  cantidad         Decimal          @db.Decimal(18, 4)
+  stock_resultante Decimal          @default(0, map: "df_mov_inv_stock") @db.Decimal(18, 4)
+  observacion      String?          @db.NVarChar(500)
+  detalle_factura  detalle_factura? @relation(fields: [id_detalle, id_factura, id_producto], references: [id_detalle, id_factura, id_producto], onUpdate: NoAction, map: "fk_mov_inv_detalle")
+  factura          factura?         @relation(fields: [id_factura], references: [id_factura], onDelete: NoAction, onUpdate: NoAction, map: "fk_mov_inv_factura")
+  producto         producto         @relation(fields: [id_producto], references: [id_producto], onUpdate: NoAction, map: "fk_mov_inv_producto")
+  usuario          usuario?         @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_mov_inv_usuario")
+
+  @@index([id_producto, fecha_movimiento(sort: Desc)], map: "ix_mov_inv_producto_fecha")
+}
+
+model negocio {
+  id_negocio             Int               @id(map: "pk_negocio") @default(autoincrement())
+  nit                    String            @db.NVarChar(20)
+  razon_social           String            @db.NVarChar(255)
+  nombre_comercial       String?           @db.NVarChar(255)
+  codigo_establecimiento String            @default("1", map: "df_negocio_estab") @db.NVarChar(10)
+  direccion              String            @db.NVarChar(500)
+  municipio              String            @db.NVarChar(100)
+  departamento           String            @db.NVarChar(100)
+  codigo_postal          String?           @db.NVarChar(12)
+  correo                 String?           @db.NVarChar(254)
+  afiliacion_iva         String            @default("GENERAL", map: "df_negocio_afil") @db.NVarChar(30)
+  ambiente_fel           String            @default("CERTIFICACION", map: "df_negocio_ambiente") @db.NVarChar(20)
+  certificador           String?           @db.NVarChar(100)
+  credencial_ref         String?           @db.NVarChar(200)
+  usuario_api            String?           @db.NVarChar(100)
+  llave_api              String?
+  llave_firma            String?
+  activo                 Boolean           @default(true, map: "df_negocio_activo")
+  factura                factura[]
+  serie_documento        serie_documento[]
+
+  @@unique([nit, codigo_establecimiento], map: "uq_negocio_nit_estab")
+}
+
+model producto {
+  id_producto           Int                     @id(map: "pk_producto") @default(autoincrement())
+  sku                   String?                 @db.NVarChar(50)
+  codigo_barras         String?                 @db.NVarChar(80)
+  nombre_producto       String                  @db.NVarChar(160)
+  descripcion           String?                 @db.NVarChar(500)
+  codigo_unidad         String                  @default("UNI", map: "df_producto_unidad") @db.NVarChar(10)
+  tipo_item             String                  @default("BIEN", map: "df_producto_tipo_item") @db.NVarChar(10)
+  precio_venta          Decimal                 @db.Decimal(18, 2)
+  tasa_iva              Decimal                 @default(0.120000, map: "df_producto_tasa_iva") @db.Decimal(9, 6)
+  controla_stock        Boolean                 @default(true, map: "df_producto_controla")
+  stock_actual          Decimal                 @default(0, map: "df_producto_stock") @db.Decimal(18, 4)
+  stock_minimo          Decimal                 @default(0, map: "df_producto_stock_min") @db.Decimal(18, 4)
+  activo                Boolean                 @default(true, map: "df_producto_activo")
+  creado_en             DateTime                @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_producto_creado") @db.DateTimeOffset
+  detalle_factura       detalle_factura[]
+  movimiento_inventario movimiento_inventario[]
+  unidad_medida         unidad_medida           @relation(fields: [codigo_unidad], references: [codigo], onUpdate: NoAction, map: "fk_producto_unidad")
+}
+
+model rol {
+  id_rol     Int       @id(map: "pk_rol") @default(autoincrement())
+  nombre_rol String    @unique(map: "uq_rol_nombre") @db.NVarChar(40)
+  usuario    usuario[]
+}
+
+model serie_documento {
+  id_serie_documento Int       @id(map: "pk_serie_documento") @default(autoincrement())
+  id_negocio         Int
+  codigo_dte         String    @db.NVarChar(10)
+  serie_interna      String    @db.NVarChar(30)
+  ultimo_numero      BigInt    @default(0, map: "df_serie_ultimo")
+  activa             Boolean   @default(true, map: "df_serie_activa")
+  factura            factura[]
+  negocio            negocio   @relation(fields: [id_negocio], references: [id_negocio], onUpdate: NoAction, map: "fk_serie_negocio")
+  tipo_dte           tipo_dte  @relation(fields: [codigo_dte], references: [codigo_dte], onUpdate: NoAction, map: "fk_serie_tipo_dte")
+
+  @@unique([id_serie_documento, id_negocio], map: "uq_serie_con_negocio")
+  @@unique([id_negocio, codigo_dte, serie_interna], map: "uq_serie_documento")
+}
+
+model tipo_dte {
+  codigo_dte          String            @id(map: "pk_tipo_dte") @db.NVarChar(10)
+  nombre              String            @db.NVarChar(100)
+  signo_inventario    Int               @db.SmallInt
+  signo_saldo         Int               @db.SmallInt
+  requiere_referencia Boolean           @default(false, map: "df_tipo_dte_ref")
+  activo              Boolean           @default(true, map: "df_tipo_dte_activo")
+  serie_documento     serie_documento[]
+}
+
+model transicion_estado_factura {
+  estado_origen                                                           String         @db.NVarChar(25)
+  estado_destino                                                          String         @db.NVarChar(25)
+  estado_factura_transicion_estado_factura_estado_destinoToestado_factura estado_factura @relation("transicion_estado_factura_estado_destinoToestado_factura", fields: [estado_destino], references: [codigo], onUpdate: NoAction, map: "fk_trans_destino")
+  estado_factura_transicion_estado_factura_estado_origenToestado_factura  estado_factura @relation("transicion_estado_factura_estado_origenToestado_factura", fields: [estado_origen], references: [codigo], onUpdate: NoAction, map: "fk_trans_origen")
+
+  @@id([estado_origen, estado_destino], map: "pk_transicion")
+}
+
+model unidad_medida {
+  codigo          String            @id(map: "pk_unidad_medida") @db.NVarChar(10)
+  nombre          String            @db.NVarChar(60)
+  detalle_factura detalle_factura[]
+  producto        producto[]
+}
+
+model usuario {
+  id_usuario               Int                        @id(map: "pk_usuario") @default(autoincrement())
+  nombre_usuario           String                     @unique(map: "uq_usuario_nombre") @db.NVarChar(50)
+  contrasena               String                     @db.NVarChar(255)
+  id_rol                   Int
+  activo                   Boolean                    @default(true, map: "df_usuario_activo")
+  version_sesion           Int                        @default(0, map: "df_usuario_version_sesion")
+  creado_en                DateTime                   @default(dbgenerated("[dbo].[fn_ahora_utc]()"), map: "df_usuario_creado") @db.DateTimeOffset
+  auditoria_evento         auditoria_evento[]
+  bitacora                 bitacora[]
+  cobros_registrados       cobro[]                    @relation("cobro_id_usuarioTousuario")
+  cobros_anulados          cobro[]                    @relation("cobro_id_usuario_anulaTousuario")
+  facturas_creadas         factura[]                  @relation("factura_id_usuarioTousuario")
+  facturas_anuladas        factura[]                  @relation("factura_id_usuario_anulaTousuario")
+  historial_estado_factura historial_estado_factura[]
+  movimiento_cliente       movimiento_cliente[]
+  movimiento_inventario    movimiento_inventario[]
+  rol                      rol                        @relation(fields: [id_rol], references: [id_rol], onUpdate: NoAction, map: "fk_usuario_rol")
+}

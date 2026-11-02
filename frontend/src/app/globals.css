@@ -1,0 +1,332 @@
+@import "tailwindcss";
+
+/* ============================================================
+   SISTEMA DE DISEÑO — todo el aspecto visual se controla desde aquí.
+   - Para cambiar el color de la marca: edita los 10 valores --color-marca-*.
+   - Para cambiar cómo se ven los botones, campos, tarjetas o tablas de
+     TODA la aplicación: edita las clases de la sección "components".
+   Las pantallas solo usan estas clases (boton, campo, tarjeta, tabla…).
+   ============================================================ */
+
+@theme {
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+    "Helvetica Neue", Arial, sans-serif;
+
+  /* Color de la marca (teal) */
+  --color-marca-50: #f0fdfa;
+  --color-marca-100: #ccfbf1;
+  --color-marca-200: #99f6e4;
+  --color-marca-300: #5eead4;
+  --color-marca-400: #2dd4bf;
+  --color-marca-500: #14b8a6;
+  --color-marca-600: #0d9488;
+  --color-marca-700: #0f766e;
+  --color-marca-800: #115e59;
+  --color-marca-900: #134e4a;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+  }
+  button:not(:disabled) {
+    @apply cursor-pointer;
+  }
+  ::selection {
+    background: var(--color-marca-200);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-marca-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* ---------- Estructura de página ---------- */
+  /* Reserva el espacio del panel lateral (NavBar) en pantallas grandes */
+  @media (min-width: 1024px) {
+    body:has(.barra-lateral) {
+      padding-left: 16rem;
+    }
+  }
+  .pagina {
+    @apply mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8;
+  }
+  .encabezado-pagina {
+    @apply mb-6 flex flex-wrap items-end justify-between gap-4;
+  }
+  .titulo-pagina {
+    @apply text-2xl font-bold tracking-tight text-slate-900;
+  }
+  .subtitulo-pagina {
+    @apply mt-1 text-sm text-slate-500;
+  }
+
+  /* ---------- Tarjetas ---------- */
+  .tarjeta {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-sm;
+  }
+  .tarjeta-enlace {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-marca-300 hover:shadow-lg;
+  }
+  .seccion-titulo {
+    @apply flex items-center gap-3 border-b border-slate-100 px-5 py-4;
+  }
+  .icono-caja {
+    @apply grid size-10 shrink-0 place-items-center rounded-xl text-xl;
+  }
+
+  /* ---------- Botones ---------- */
+  .boton {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marca-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .boton-primario {
+    @apply bg-marca-700 text-white shadow-sm hover:bg-marca-800 active:bg-marca-900;
+  }
+  .boton-secundario {
+    @apply border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50 active:bg-slate-100;
+  }
+  .boton-peligro {
+    @apply bg-red-600 text-white shadow-sm hover:bg-red-700;
+  }
+  .boton-texto {
+    @apply min-h-0 px-2.5 py-1.5 text-slate-600 hover:bg-slate-100;
+  }
+  .boton-chico {
+    @apply min-h-9 px-3 py-1.5;
+  }
+  .boton-grande {
+    @apply min-h-14 rounded-2xl px-6 text-base;
+  }
+
+  /* ---------- Formularios ---------- */
+  .campo {
+    @apply block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 hover:border-slate-400 focus:border-marca-500 focus:outline-none focus:ring-4 focus:ring-marca-100 disabled:bg-slate-100;
+  }
+  .campo-con-icono {
+    @apply pl-10;
+  }
+  .etiqueta {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .ayuda {
+    @apply mt-1.5 text-xs text-slate-500;
+  }
+
+  /* ---------- Avisos ---------- */
+  .alerta {
+    @apply flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-sm;
+  }
+  .alerta-error {
+    @apply border-red-200 bg-red-50 text-red-800;
+  }
+  .alerta-ok {
+    @apply border-emerald-200 bg-emerald-50 text-emerald-800;
+  }
+  .alerta-aviso {
+    @apply border-amber-200 bg-amber-50 text-amber-800;
+  }
+
+  /* ---------- Etiquetas de estado ---------- */
+  .chip {
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset;
+  }
+  .chip-ok {
+    @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20;
+  }
+  .chip-aviso {
+    @apply bg-amber-50 text-amber-800 ring-amber-600/25;
+  }
+  .chip-error {
+    @apply bg-red-50 text-red-700 ring-red-600/20;
+  }
+  .chip-neutro {
+    @apply bg-slate-100 text-slate-600 ring-slate-500/20;
+  }
+  .chip-info {
+    @apply bg-sky-50 text-sky-700 ring-sky-600/20;
+  }
+  .chip-marca {
+    @apply bg-marca-50 text-marca-700 ring-marca-600/20;
+  }
+
+  /* ---------- Filtros en forma de píldora ---------- */
+  .pildora {
+    @apply rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50;
+  }
+  .pildora-activa {
+    @apply border-marca-700 bg-marca-700 text-white shadow-sm hover:border-marca-800 hover:bg-marca-800;
+  }
+
+  /* ---------- Tablas ---------- */
+  .tabla-contenedor {
+    @apply overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-sm;
+  }
+  .tabla {
+    @apply w-full text-sm;
+  }
+  .tabla thead th {
+    @apply whitespace-nowrap bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .tabla tbody td {
+    @apply px-4 py-3 align-middle text-slate-700;
+  }
+  .tabla tbody tr {
+    @apply border-t border-slate-100 transition-colors hover:bg-slate-50/70;
+  }
+  .tabla .num {
+    @apply text-right tabular-nums;
+  }
+  .vacio {
+    @apply flex flex-col items-center justify-center gap-2 px-6 py-14 text-center text-sm text-slate-500;
+  }
+
+  /* ---------- Indicadores (cifras grandes) ---------- */
+  .indicador-valor {
+    @apply mt-1 text-3xl font-bold tabular-nums tracking-tight text-slate-900;
+  }
+}
+
+/* ---------- Animaciones ---------- */
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.aparecer {
+  animation: aparecer 0.28s ease-out both;
+}
+.girar {
+  animation: girar 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aparecer,
+  .girar {
+    animation: none;
+  }
+}
+
+/* ---------- Impresión: solo el ticket (impresora térmica) o el documento (hoja carta) ---------- */
+@media print {
+  /* Margen 0 = el navegador no imprime su encabezado/pie (URL, fecha);
+     el espacio lo da cada documento con su propio padding. */
+  @page {
+    size: auto;
+    margin: 0;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body:has(.barra-lateral) {
+    padding-left: 0;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .ticket-imprimible,
+  .ticket-imprimible *,
+  .documento-imprimible,
+  .documento-imprimible * {
+    visibility: visible;
+  }
+  .documento-imprimible {
+    /* Si el documento ocupa varias hojas, el margen (padding) se repite arriba y abajo en cada una */
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    overflow: visible !important;
+    animation: none !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 12mm 14mm;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #fff;
+  }
+  /* El documento cabe en UNA hoja: se compacta el espaciado y la pagina (page.tsx) calcula la escala
+     (--zoom-impresion) segun cuantas lineas, pagos y avisos tiene. */
+  /* El documento cabe en UNA hoja: se compacta el espaciado y la pagina (page.tsx) calcula la escala
+     (--zoom-impresion) segun cuantas lineas, pagos y avisos tiene. */
+  body { background: #fff !important; }
+  .contenido-doc { zoom: var(--zoom-impresion, 1); }
+  .documento-imprimible { padding: 8mm 12mm !important; }
+  .documento-imprimible .contenido-doc header { padding-bottom: 8px; gap: 12px; }
+  .documento-imprimible .contenido-doc header p.text-2xl { font-size: 1.25rem; line-height: 1.2; }
+  .documento-imprimible .contenido-doc header > div:last-child { padding: 6px 12px !important; min-width: 13rem !important; }
+  .documento-imprimible .contenido-doc header .mt-2 { margin-top: 4px !important; }
+  .documento-imprimible .contenido-doc .mt-5,
+  .documento-imprimible .contenido-doc .mt-6 { margin-top: 8px !important; }
+  .documento-imprimible .contenido-doc .mt-8 { margin-top: 8px !important; }
+  .documento-imprimible .contenido-doc .p-4 { padding: 8px 10px !important; }
+  .documento-imprimible .contenido-doc dl.space-y-1\.5 > * + * { margin-top: 2px !important; }
+  .documento-imprimible .contenido-doc td { padding-top: 3px !important; padding-bottom: 3px !important; }
+  .documento-imprimible .contenido-doc th { padding-top: 4px !important; padding-bottom: 4px !important; }
+  .documento-imprimible .contenido-doc li { padding-top: 2px !important; padding-bottom: 2px !important; }
+  .documento-imprimible .contenido-doc .mt-3 { margin-top: 4px !important; }
+  .documento-imprimible .contenido-doc .mt-1\.5 { margin-top: 2px !important; }
+  .documento-imprimible .contenido-doc section dl.grid { row-gap: 2px !important; margin-top: 4px !important; }
+  .documento-imprimible .contenido-doc section dl.grid > div.sm\:col-span-3 { grid-column: span 1 / span 1; }
+  .documento-imprimible .contenido-doc img, .documento-imprimible .contenido-doc .size-28 { width: 4.5rem !important; height: 4.5rem !important; }
+  .documento-imprimible .contenido-doc footer { padding-top: 6px; }
+  .documento-imprimible .contenido-doc footer p.mt-1 { margin-top: 2px !important; }
+
+  /* Marca de agua: "fixed" hace que el navegador la repita en cada hoja */
+  .marca-agua {
+    position: fixed !important;
+  }
+  .ticket-imprimible {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80mm;
+    padding: 4mm;
+    border: 0;
+    box-shadow: none;
+  }
+  .no-imprimir {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------
+   Campos del login (sin caja, solo una línea).
+   Chrome pinta un fondo claro con letras negras en los campos que
+   autocompleta (:-webkit-autofill) y ese estilo pesa más que
+   "bg-transparent". Este truco lo deja invisible y conserva las
+   letras blancas. Se aplica solo a los inputs con la clase campo-linea.
+   ------------------------------------------------------------ */
+.campo-linea:-webkit-autofill,
+.campo-linea:-webkit-autofill:hover,
+.campo-linea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  transition: background-color 600000s ease-in-out 0s;
+}
+
+/* ------------------------------------------------------------
+   Pantallas tactiles (celular/tableta): los botones chicos ("Ver", "Anular"...)
+   necesitan al menos ~40 px de alto para tocarse sin errar.
+   ------------------------------------------------------------ */
+@media (pointer: coarse) {
+  .boton-chico {
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+  }
+}

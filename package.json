@@ -1,0 +1,35 @@
+{
+  "name": "fel-saas-gt",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistema de facturación FEL Guatemala con POS, cobros, inventario y auditoría (SQL Server)",
+  "scripts": {
+    "dev": "next dev frontend",
+    "build": "next build frontend",
+    "start": "next start frontend",
+    "prisma:generate": "cd frontend && prisma generate --schema ../database/prisma/schema.prisma",
+    "prisma:validate": "cd frontend && prisma validate --schema ../database/prisma/schema.prisma",
+    "typecheck": "tsc --noEmit -p frontend/tsconfig.json"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.0",
+    "argon2": "^0.44.0",
+    "decimal.js": "^10.4.3",
+    "jose": "^6.0.0",
+    "next": "^16.0.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "prisma": "^6.16.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.7.0"
+  }
+}

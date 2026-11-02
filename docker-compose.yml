@@ -1,0 +1,42 @@
+# ============================================================
+# Opcional: correr la app en Docker, detrás de un proxy con HTTPS.
+#   app    la aplicación (no publica puertos: solo el proxy puede llegar a ella)
+#   proxy  Caddy: HTTPS, y escribe la IP real del cliente (ver Caddyfile)
+# La base de datos NO se levanta aquí (la gestionas por separado):
+# apunta DATABASE_URL en frontend/.env a tu SQL Server. Desde dentro de Docker,
+# el SQL Server de tu computadora es host.docker.internal (no localhost).
+# Para un negocio pequeño también basta con `npm run build && npm start`
+# (sin proxy el límite de logins es un solo contador para todos).
+#
+# Arranque:   docker compose up -d --build
+# Dominio:    DOMINIO=tienda.ejemplo.com docker compose up -d   (por defecto, https://localhost)
+# ============================================================
+services:
+  app:
+    build: .
+    expose:
+      - "3000"
+    env_file: frontend/.env
+    environment:
+      # Hay un proxy de confianza delante: la IP sale de X-Forwarded-For (el proxy la sobrescribe)
+      TRUST_PROXY: "1"
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_datos:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  caddy_datos:
+  caddy_config:

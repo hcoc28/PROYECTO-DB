@@ -1,0 +1,62 @@
+# Dependencias
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Producción
+build/
+dist/
+
+# Variables de entorno (NUNCA subir credenciales)
+.env
+.env.local
+.env.production
+
+# Prisma
+prisma/*.db
+
+# Logs y temporales
+*.log
+.DS_Store
+Thumbs.db
+
+# ------------------------------------------------------------
+# Seguridad: nunca subir secretos, llaves ni copias de la base de datos
+# ------------------------------------------------------------
+# Variantes de .env (la plantilla .env.example SI se sube)
+.env.*
+!.env.example
+
+# Llaves y certificados
+*.pem
+*.key
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+
+# Copias de la base de datos (contienen datos reales de clientes y facturas)
+*.bak
+*.bacpac
+*.mdf
+*.ldf
+*.ndf
+respaldos/
+
+# Credenciales de desarrollo generadas
+database/.credenciales*
+
+# Archivos que genera el sistema o el editor (no son codigo)
+*.tsbuildinfo
+frontend/AGENTS.md
+frontend/CLAUDE.md
+.claude/settings.local.json
+
+# Contrasena inicial generada (no se sube)
+database/credenciales-iniciales.txt
+
+# Configuracion local de Claude Code
+.claude/

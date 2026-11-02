@@ -1,0 +1,34 @@
+{
+  // Tailwind v4 usa reglas CSS propias (@theme, @apply, @layer, @source…)
+  // que el validador de CSS de VS Code no conoce y marca como advertencia.
+  // No son errores: Tailwind las procesa al compilar. Esto silencia el aviso.
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+
+  // Next.js repite el mismo nombre de archivo (page.tsx, route.ts) en
+  // cada carpeta de ruta, así que sin esto todas las pestañas del editor
+  // se ven idénticas. Esto hace que cada pestaña muestre también su
+  // carpeta, para saber de un vistazo qué página o endpoint es.
+  "workbench.editor.customLabels.enabled": true,
+  "workbench.editor.customLabels.patterns": {
+    "**/app/page.tsx": "inicio/page.tsx",
+    "**/app/login/page.tsx": "login/page.tsx",
+    "**/app/pos/page.tsx": "pos/page.tsx",
+    "**/app/facturas/page.tsx": "facturas/page.tsx",
+    "**/app/pagos/page.tsx": "pagos/page.tsx",
+    "**/app/inventario/page.tsx": "inventario/page.tsx",
+    "**/app/reportes/page.tsx": "reportes/page.tsx",
+    "**/app/admin/page.tsx": "admin/page.tsx",
+    "**/app/layout.tsx": "layout.tsx (raíz)",
+    "**/api/v1/auth/login/route.ts": "auth/login/route.ts",
+    "**/api/v1/facturas/route.ts": "facturas/route.ts",
+    "**/api/v1/facturas/[uuid]/route.ts": "facturas/[uuid]/route.ts",
+    "**/api/v1/pagos/route.ts": "pagos/route.ts",
+    "**/api/v1/pos/ventas/route.ts": "pos/ventas/route.ts",
+    "**/api/v1/productos/route.ts": "productos/route.ts",
+    "**/api/v1/negocio/route.ts": "negocio/route.ts",
+    "**/api/v1/usuarios/route.ts": "usuarios/route.ts",
+    "**/api/v1/series/route.ts": "series/route.ts"
+  }
+}
