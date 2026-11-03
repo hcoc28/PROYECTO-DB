@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Permite abrir la app en desarrollo desde otro equipo de la red local
   // (celular, tablet, otra PC) usando la IP de esta computadora.
-  allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "*.ngrok-free.dev"],
   // Cabeceras de seguridad globales (ver docs/seguridad.md)
   async headers() {
     return [
